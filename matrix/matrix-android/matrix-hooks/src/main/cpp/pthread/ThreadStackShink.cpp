@@ -37,6 +37,7 @@
 #include "ThreadStackShink.h"
 
 #define LOG_TAG "Matrix.ThreadStackShinker"
+#define JAVA_STACK_SIZE 1040 * 1024
 
 static std::atomic_size_t sDefaultNativeStackSize(0);
 static std::atomic_bool sShrinkJavaThread(false);
@@ -69,7 +70,7 @@ namespace thread_stack_shink {
             }
         }
         const size_t defaultNativeStackSize = GetDefaultNativeStackSize();
-        if (origStackSize != defaultNativeStackSize) {
+        if (origStackSize != defaultNativeStackSize && JAVA_STACK_SIZE != origStackSize) {
             LOGE(LOG_TAG, "Stack size is not equal to default native stack size (%u != %u), give up adjusting.",
                  origStackSize, defaultNativeStackSize);
             return ERANGE;

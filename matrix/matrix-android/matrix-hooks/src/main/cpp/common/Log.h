@@ -33,6 +33,7 @@ EXPORT_C void internal_hook_logger(int log_level, const char *tag, const char *f
 EXPORT_C void
 internal_hook_vlogger(int log_level, const char *tag, const char *format, va_list varargs);
 
+#define EnableLOG
 #ifdef EnableLOG
 
 #undef LOGD

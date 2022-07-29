@@ -154,20 +154,38 @@ public class MemoryHookActivity extends AppCompatActivity {
         if (!mHasPrepared || mHasRunTest) return;
         mHasRunTest = true;
 
+        if (!is64BitRuntime()) {
+            final PthreadHook.ThreadStackShrinkConfig config = new PthreadHook.ThreadStackShrinkConfig()
+                    .setEnabled(true)
+                    .addIgnoreCreatorSoPatterns(".*/app_tbs/.*")
+                    .addIgnoreCreatorSoPatterns(".*/libany\\.so$");
+            HookManager.INSTANCE.addHook(PthreadHook.INSTANCE.setThreadStackShrinkConfig(config));
+        } else {
+            final PthreadHook.ThreadStackShrinkConfig config = new PthreadHook.ThreadStackShrinkConfig()
+                    .setEnabled(true);
+            // Thread hook
+            HookManager.INSTANCE.addHook(PthreadHook.INSTANCE.setThreadStackShrinkConfig(config));
+        }
+
         // Init Hooks.
         try {
+            PthreadHook.INSTANCE
+                    .addHookThread(".*")
+                    .setThreadTraceEnabled(true)
+                    .enableTracePthreadRelease(true)
+                    .enableQuicken(false);
+
+            PthreadHook.INSTANCE.enableLogger(true);
+
             HookManager.INSTANCE
 
                     // Memory hook
                     .addHook(MemoryHook.INSTANCE
 //                            .addHookSo(".*test-memoryhook\\.so$")
-                            .addHookSo(".*library-not-exists\\.so$")
-                            .enableStacktrace(true)
-                            .stacktraceLogThreshold(0)
+                                    .addHookSo(".*library-not-exists\\.so$")
+                                    .enableStacktrace(true)
+                                    .stacktraceLogThreshold(0)
                     )
-
-                    // Thread hook
-                    .addHook(PthreadHook.INSTANCE)
                     .commitHooks();
         } catch (HookManager.HookFailedException e) {
             e.printStackTrace();
@@ -198,7 +216,15 @@ public class MemoryHookActivity extends AppCompatActivity {
 
         if (i == j) {
             long start = System.currentTimeMillis();
-            MemoryHookTestNative.nativeRunTest();
+//            MemoryHookTestNative.nativeRunTest();
+            for (i=0;i<3;i++) {
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                    }
+                };
+                new Thread(Thread.currentThread().getThreadGroup(), runnable, "a", 0).start();
+            }
             long duration = System.currentTimeMillis() - start;
 
             Log.e(TAG, "Run test duration: " + duration);
